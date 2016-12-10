@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -35,23 +36,23 @@ typedef struct {
 
 void write(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) {
     printf("Header:\n");
-    printf("%i\n", tBMPHeader->usbfType);
-    printf("%i\n", tBMPHeader->uibfSize);
-    printf("%i\n", tBMPHeader->uibfReserved);
-    printf("%i\n", tBMPHeader->uibfOffBits);
+    printf("%Type: i\n", tBMPHeader->usbfType);
+    printf("Size: %i\n", tBMPHeader->uibfSize);
+    printf("%Reserved: i\n", tBMPHeader->uibfReserved);
+    printf("OffBits: %i\n", tBMPHeader->uibfOffBits);
     printf("\n");
     printf("Informationsblock:\n");
-    printf("%i\n", tBMPInfoblock->uibiSize);
-    printf("%i\n", tBMPInfoblock->lbiWidth);
-    printf("%i\n", tBMPInfoblock->lbiHeight);
-    printf("%i\n", tBMPInfoblock->usbiPlanes);
-    printf("%i\n", tBMPInfoblock->usbiBitCount);
-    printf("%i\n", tBMPInfoblock->uibiCompression);
-    printf("%i\n", tBMPInfoblock->uibiSizeImage);
-    printf("%i\n", tBMPInfoblock->lXPelsperMeter);
-    printf("%i\n", tBMPInfoblock->lYPelsPerMeter);
-    printf("%i\n", tBMPInfoblock->uibiClrUsed);
-    printf("%i\n", tBMPInfoblock->uibiClrImportant);
+    printf("Size: %i\n", tBMPInfoblock->uibiSize);
+    printf("Width: %i\n", tBMPInfoblock->lbiWidth);
+    printf("Height: %i\n", tBMPInfoblock->lbiHeight);
+    printf("Planes: %i\n", tBMPInfoblock->usbiPlanes);
+    printf("BitCount: %i\n", tBMPInfoblock->usbiBitCount);
+    printf("Compression: %i\n", tBMPInfoblock->uibiCompression);
+    printf("SizeImage: %i\n", tBMPInfoblock->uibiSizeImage);
+    printf("XPelsperMeter: %i\n", tBMPInfoblock->lXPelsperMeter);
+    printf("YPelsPerMeter: %i\n", tBMPInfoblock->lYPelsPerMeter);
+    printf("ClrUsed: %i\n", tBMPInfoblock->uibiClrUsed);
+    printf("ClrImportant: %i\n", tBMPInfoblock->uibiClrImportant);
 }
 
 void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) {

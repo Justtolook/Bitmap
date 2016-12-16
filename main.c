@@ -31,14 +31,13 @@ typedef struct {
     char cRed;
     char cGreen;
     char cBlue;
-    char cUseless;
 }BMPCOLOR;
 
-void write(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) {
+void write(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BMPCOLOR *tBMPIMG) {
     printf("Header:\n");
-    printf("%Type: i\n", tBMPHeader->usbfType);
+    printf("Type: %i\n", tBMPHeader->usbfType);
     printf("Size: %i\n", tBMPHeader->uibfSize);
-    printf("%Reserved: i\n", tBMPHeader->uibfReserved);
+    printf("Reserved: %i\n", tBMPHeader->uibfReserved);
     printf("OffBits: %i\n", tBMPHeader->uibfOffBits);
     printf("\n");
     printf("Informationsblock:\n");
@@ -53,13 +52,16 @@ void write(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock)
     printf("YPelsPerMeter: %i\n", tBMPInfoblock->lYPelsPerMeter);
     printf("ClrUsed: %i\n", tBMPInfoblock->uibiClrUsed);
     printf("ClrImportant: %i\n", tBMPInfoblock->uibiClrImportant);
+    printf("\n");
+
+
 }
 
-void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) {
+void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BMPCOLOR *tBMPIMG) {
     FILE *fpBMP;
     fpBMP = fopen("naegel.bmp", "r");
                                                     //Header
-    fread(&(tBMPHeader->usbfType),2,1,fpBMP);
+    fread(&tBMPHeader->usbfType,2,1,fpBMP);
     fread(&tBMPHeader->uibfSize,4,1,fpBMP);
     fread(&tBMPHeader->uibfReserved,4,1,fpBMP);
     fread(&tBMPHeader->uibfOffBits,4,1,fpBMP);
@@ -75,7 +77,6 @@ void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) 
     fread(&tBMPInfoblock->lYPelsPerMeter,4,1,fpBMP);
     fread(&tBMPInfoblock->uibiClrUsed,4,1,fpBMP);
     fread(&tBMPInfoblock->uibiClrImportant,4,1,fpBMP);
-                                                    //Bild
 }
 
 
@@ -84,17 +85,56 @@ int main()
     BITMAPFILEHEADER tBMPHeader;
     BITMAPINFORMATIONSBLOCK tBMPInfoblock;
     BMPCOLOR **tBMPImg;
+    BMPCOLOR tBMPIMG;
     int iC;
+    int iX;
+    int iY;
 
-    read(&tBMPHeader, &tBMPInfoblock);
-    write(&tBMPHeader, &tBMPInfoblock);
+    read(&tBMPHeader, &tBMPInfoblock, &tBMPIMG);
+    write(&tBMPHeader, &tBMPInfoblock, &tBMPIMG);
 
     tBMPImg = (BMPCOLOR**)malloc(tBMPInfoblock.lbiWidth*sizeof(BMPCOLOR*));
-    if(NULL==tBMPImg)
-        printf("Fehler");exit(1);
+    if(NULL==tBMPImg) {
+        printf("Fehler");
+        exit(1);
+    }
     for(iC=0; iC<tBMPInfoblock.lbiWidth;iC++) {
         tBMPImg[iC]=(BMPCOLOR*)malloc(abs(tBMPInfoblock.lbiHeight)*sizeof(BMPCOLOR));
-        if(NULL==tBMPImg[iC]);
     }
+
+    FILE *fpBMP;
+    fpBMP = fopen("naegel.bmp", "r");
+
+/*
+    for(iX=0; iX <tBMPInfoblock.lbiWidth-1;iX++) {
+        for(iY=0; iY <tBMPInfoblock.lbiHeight-1;iY++) {
+            fread(tBMPImg[iX][iY].cBlue,1,1,fpBMP);
+            printf("%c\n", tBMPImg[iX][iY].cBlue);
+        }
+    }
+*/
+    for(iX=0; iX<tBMPInfoblock.lbiWidth-1; iX++) {
+        for(iY=0; iY<tBMPInfoblock.lbiWidth-1; iY++) {
+            tBMPImg[iY][iX].cBlue=fgetc(fpBMP);
+            tBMPImg[iY][iX].cGreen=fgetc(fpBMP);
+            tBMPImg[iY][iX].cRed=fgetc(fpBMP);
+        }
+        fseek(fpBMP, tBMPInfoblock.lbiWidth%4, SEEK_CUR);
+    }
+
+    FILE *fpCopy;
+    fpCopy = fopen("Kopie.bmp", "w+");
+
+    for(iX=0; iX<tBMPInfoblock.lbiWidth-1; iX++) {
+        for(iY=0; iY<tBMPInfoblock.lbiWidth-1; iY++) {
+            fputc(tBMPImg[iY][iX].cBlue,fpCopy);
+            fputc(tBMPImg[iY][iX].cGreen,fpCopy);
+            fputc(tBMPImg[iY][iX].cRed,fpCopy);
+        }
+
+    }
+
+    free(fpBMP);
+    free(fpCopy);
     return 0;
 }

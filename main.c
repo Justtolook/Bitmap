@@ -59,7 +59,7 @@ void write(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock,
 
 void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BMPCOLOR *tBMPIMG) {
     FILE *fpBMP;
-    fpBMP = fopen("naegel.bmp", "r");
+    fpBMP = fopen("test.bmp", "r");
                                                     //Header
     fread(&tBMPHeader->usbfType,2,1,fpBMP);
     fread(&tBMPHeader->uibfSize,4,1,fpBMP);
@@ -103,7 +103,7 @@ int main()
     }
 
     FILE *fpBMP;
-    fpBMP = fopen("naegel.bmp", "r");
+    fpBMP = fopen("test.bmp", "r");
 
 /*
     for(iX=0; iX <tBMPInfoblock.lbiWidth-1;iX++) {
@@ -131,6 +131,7 @@ int main()
             fputc(tBMPImg[iY][iX].cGreen,fpCopy);
             fputc(tBMPImg[iY][iX].cRed,fpCopy);
         }
+        fprintf(0,sizeof(char), tBMPInfoblock.lbiWidth%4, fpCopy);
 
     }
 

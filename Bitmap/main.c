@@ -57,7 +57,7 @@ void write(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock)
 
 void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) {
     FILE *fpBMP;
-    fpBMP = fopen("naegel.bmp", "r");
+    fpBMP = fopen("wuerfel.bmp", "r");
                                                     //Header
     fread(&(tBMPHeader->usbfType),2,1,fpBMP);
     fread(&tBMPHeader->uibfSize,4,1,fpBMP);
@@ -84,10 +84,14 @@ void greyscale(BMPCOLOR **tBMPImg, BMPCOLOR **tBMPGrey, BITMAPINFORMATIONSBLOCK 
     int iY;
 
     FILE *fpGrey;
-    fpGrey=fopen("grau.bmp", "w+");
+    fpGrey=fopen("grau.bmp", "w");
 
+    /*
     fwrite(tBMPHeader, sizeof(&tBMPHeader), 1, fpGrey);
     fwrite(tBMPInfoblock, sizeof(&tBMPInfoblock), 1, fpGrey);
+*/
+
+    fseek(fpGrey,54,0);          //Filepointer auf anfang der Bilddaten setzen
 
     for(iX=0;iX<tBMPInfoblock->lbiWidth;iX++) {
         for(iY=0;iY<tBMPInfoblock->lbiHeight;iY++) {
@@ -126,8 +130,10 @@ int main()
     int iAus;
     FILE *fpBMP;
     FILE *fpCopy;
-    fpBMP = fopen("naegel.bmp", "r");
+    FILE *fpGrey;
+    fpBMP = fopen("wuerfel.bmp", "r");
     fpCopy = fopen("Kopie.bmp", "w+");
+    fpGrey = fopen("grau.bmp", "w+");
 
     read(&tBMPHeader, &tBMPInfoblock);
     write(&tBMPHeader, &tBMPInfoblock);
@@ -181,7 +187,11 @@ int main()
     scanf("%d", &iAus);
 
     switch(iAus) {
-    case 1: greyscale(tBMPImg, tBMPGrey, &tBMPInfoblock, &tBMPHeader);
+    case 1:
+        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpGrey);
+        fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpGrey);
+        greyscale(tBMPImg, tBMPGrey, &tBMPInfoblock, &tBMPHeader);
+
     }
 
 

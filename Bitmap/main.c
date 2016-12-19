@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//TODO erstellen vom Bild in eine Funktion packen
 
 #pragma pack(1)
 typedef struct {
@@ -77,15 +78,49 @@ void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) 
                                                     //Bild
 }
 
+void graustufen(BMPCOLOR **tBMPImg, BMPCOLOR **tBMPGrey, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {      //Grau = 0,299*Rot + 0,587*Grün + 0,144*Blau
+    double dGrey;
+    int iX;
+    int iY;
+
+    FILE *fpGrey;
+    fpGrey=fopen("grau.bmp", "w+");
+
+    fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpGrey);
+    fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpGrey);
+
+    for(iX=0;iX<&tBMPInfoblock->lbiWidth;iX++) {
+        for(iY=0;iY<&tBMPInfoblock->lbiHeight;iY++) {
+            dGrey=0.299*tBMPImg[iY][iX].cRed+0.587*tBMPImg[iY][iX].cGreen+0.144*tBMPImg[iY][iX].cBlue;
+            tBMPGrey[iY][iX].cRed=dGrey;
+            tBMPGrey[iY][iX].cGreen=dGrey;
+            tBMPGrey[iY][iX].cBlue=dGrey;
+        }
+    }
+
+    for(iX=0;iX<&tBMPInfoblock->lbiWidth;iX++) {
+        for(iY=0;iY<&tBMPInfoblock->lbiHeight;iY++) {
+            fputc(tBMPGrey[iY][iX].cBlue,fpGrey);
+            fputc(tBMPGrey[iY][iX].cGreen,fpGrey);
+            fputc(tBMPGrey[iY][iX].cRed,fpGrey);
+        }
+        fwrite("0", tBMPInfoblock->lbiWidth % 4,1,fpGrey);
+    }
+
+    fclose(fpGrau);
+}
+
 
 int main()
 {
     BITMAPFILEHEADER tBMPHeader;
     BITMAPINFORMATIONSBLOCK tBMPInfoblock;
     BMPCOLOR **tBMPImg;
+    BMPCOLOR **tBMPGrey;
     int iC;
     int iX;
     int iY;
+    int iAus;
     FILE *fpBMP;
     FILE *fpCopy;
     fpBMP = fopen("wuerfel.bmp", "r");
@@ -93,7 +128,7 @@ int main()
 
     read(&tBMPHeader, &tBMPInfoblock);
     write(&tBMPHeader, &tBMPInfoblock);
-
+                                        //Speicherreservierung für Bilddaten
     tBMPImg = (BMPCOLOR**)malloc(tBMPInfoblock.lbiWidth*sizeof(BMPCOLOR*));
     if(NULL==tBMPImg) {
         printf("Fehler");
@@ -103,7 +138,19 @@ int main()
         tBMPImg[iC]=(BMPCOLOR*)malloc(abs(tBMPInfoblock.lbiHeight)*sizeof(BMPCOLOR));
         if(NULL==tBMPImg[iC]);
     }
-    fseek(fpBMP,54,0);
+                                        //Speicherreservierung für Graustufenbilddaten
+    tBMPGrey = (BMPCOLOR**)malloc(tBMPInfoblock.lbiWidth*sizeof(BMPCOLOR*));
+    if(NULL==tBMPGrey) {
+        printf("Fehler");
+        exit(1);
+    }
+    for(iC=0; iC<tBMPInfoblock.lbiWidth;iC++) {
+        tBMPGrey[iC]=(BMPCOLOR*)malloc(abs(tBMPInfoblock.lbiHeight)*sizeof(BMPCOLOR));
+        if(NULL==tBMPGrey[iC]);
+    }
+
+    fseek(fpBMP,54,0);          //Filepointer auf anfang der Bilddaten setzen
+
     for(iX=0;iX<tBMPInfoblock.lbiHeight;iX++) {
         for(iY=0;iY<tBMPInfoblock.lbiWidth;iY=iY++) {
             tBMPImg[iY][iX].cBlue = fgetc(fpBMP);
@@ -122,9 +169,20 @@ int main()
             fputc(tBMPImg[iY][iX].cGreen,fpCopy);
             fputc(tBMPImg[iY][iX].cRed,fpCopy);
         }
-        //fputc(tBMPImg[iX][iY].cUseless,fpCopy);
         fwrite("0", tBMPInfoblock.lbiWidth%4,1,fpCopy);
     }
+
+    printf("Was möchten Sie machen?\n\n");
+    printf("1 Graustufenbild erzeugen\n");
+    printf("2 Bild um 90° drehen\n");
+    scanf("%d", &iAus);
+
+    switch(iAus) {
+    case 1: graustufen(tBMPImg, tBMPGrey, &tBMPInfoblock, &tBMPHeader);
+    }
+
+
+
     fclose(fpCopy);
     fclose(fpBMP);
 

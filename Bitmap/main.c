@@ -57,7 +57,7 @@ void write(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock)
 
 void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) {
     FILE *fpBMP;
-    fpBMP = fopen("wuerfel.bmp", "r");
+    fpBMP = fopen("naegel.bmp", "r");
                                                     //Header
     fread(&(tBMPHeader->usbfType),2,1,fpBMP);
     fread(&tBMPHeader->uibfSize,4,1,fpBMP);
@@ -78,7 +78,7 @@ void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) 
                                                     //Bild
 }
 
-void graustufen(BMPCOLOR **tBMPImg, BMPCOLOR **tBMPGrey, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {      //Grau = 0,299*Rot + 0,587*Grün + 0,144*Blau
+void greyscale(BMPCOLOR **tBMPImg, BMPCOLOR **tBMPGrey, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {      //Grau = 0,299*Rot + 0,587*Grün + 0,144*Blau
     double dGrey;
     int iX;
     int iY;
@@ -86,20 +86,23 @@ void graustufen(BMPCOLOR **tBMPImg, BMPCOLOR **tBMPGrey, BITMAPINFORMATIONSBLOCK
     FILE *fpGrey;
     fpGrey=fopen("grau.bmp", "w+");
 
-    fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpGrey);
-    fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpGrey);
+    fwrite(tBMPHeader, sizeof(&tBMPHeader), 1, fpGrey);
+    fwrite(tBMPInfoblock, sizeof(&tBMPInfoblock), 1, fpGrey);
 
-    for(iX=0;iX<&tBMPInfoblock->lbiWidth;iX++) {
-        for(iY=0;iY<&tBMPInfoblock->lbiHeight;iY++) {
-            dGrey=0.299*tBMPImg[iY][iX].cRed+0.587*tBMPImg[iY][iX].cGreen+0.144*tBMPImg[iY][iX].cBlue;
-            tBMPGrey[iY][iX].cRed=dGrey;
-            tBMPGrey[iY][iX].cGreen=dGrey;
-            tBMPGrey[iY][iX].cBlue=dGrey;
+    for(iX=0;iX<tBMPInfoblock->lbiWidth;iX++) {
+        for(iY=0;iY<tBMPInfoblock->lbiHeight;iY++) {
+            dGrey=0;
+            dGrey=0.298* tBMPImg[iY][iX].cRed + 0.586 * tBMPImg[iY][iX].cGreen + 0.144 * tBMPImg[iY][iX].cBlue;  //Error: "error reading variable dGrey"
+            if(dGrey>255) {
+                dGrey=255;
+            }
+            tBMPGrey[iY][iX].cRed=(int)dGrey;                                                                           //i guess something is with those pointers wrong
+            tBMPGrey[iY][iX].cGreen=(int)dGrey;
+            tBMPGrey[iY][iX].cBlue=(int)dGrey;
         }
     }
-
-    for(iX=0;iX<&tBMPInfoblock->lbiWidth;iX++) {
-        for(iY=0;iY<&tBMPInfoblock->lbiHeight;iY++) {
+    for(iX=0;iX<tBMPInfoblock->lbiWidth;iX++) {
+        for(iY=0;iY<tBMPInfoblock->lbiHeight;iY++) {
             fputc(tBMPGrey[iY][iX].cBlue,fpGrey);
             fputc(tBMPGrey[iY][iX].cGreen,fpGrey);
             fputc(tBMPGrey[iY][iX].cRed,fpGrey);
@@ -107,7 +110,7 @@ void graustufen(BMPCOLOR **tBMPImg, BMPCOLOR **tBMPGrey, BITMAPINFORMATIONSBLOCK
         fwrite("0", tBMPInfoblock->lbiWidth % 4,1,fpGrey);
     }
 
-    fclose(fpGrau);
+    fclose(fpGrey);
 }
 
 
@@ -123,7 +126,7 @@ int main()
     int iAus;
     FILE *fpBMP;
     FILE *fpCopy;
-    fpBMP = fopen("wuerfel.bmp", "r");
+    fpBMP = fopen("naegel.bmp", "r");
     fpCopy = fopen("Kopie.bmp", "w+");
 
     read(&tBMPHeader, &tBMPInfoblock);
@@ -178,7 +181,7 @@ int main()
     scanf("%d", &iAus);
 
     switch(iAus) {
-    case 1: graustufen(tBMPImg, tBMPGrey, &tBMPInfoblock, &tBMPHeader);
+    case 1: greyscale(tBMPImg, tBMPGrey, &tBMPInfoblock, &tBMPHeader);
     }
 
 

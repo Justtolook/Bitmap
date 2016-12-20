@@ -55,11 +55,11 @@ void write(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock)
     printf("biClrImportant: %i\n", tBMPInfoblock->uibiClrImportant);
 }
 
-void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) {
+void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) {   //Datei hier ändern
     FILE *fpBMP;
-    fpBMP = fopen("wuerfel.bmp", "r");
+    fpBMP = fopen("fueller.bmp", "r");      //Datei hier ändern
                                                     //Header
-    fread(&(tBMPHeader->usbfType),2,1,fpBMP);
+    fread(&tBMPHeader->usbfType,2,1,fpBMP);
     fread(&tBMPHeader->uibfSize,4,1,fpBMP);
     fread(&tBMPHeader->uibfReserved,4,1,fpBMP);
     fread(&tBMPHeader->uibfOffBits,4,1,fpBMP);
@@ -75,48 +75,103 @@ void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) 
     fread(&tBMPInfoblock->lYPelsPerMeter,4,1,fpBMP);
     fread(&tBMPInfoblock->uibiClrUsed,4,1,fpBMP);
     fread(&tBMPInfoblock->uibiClrImportant,4,1,fpBMP);
-                                                    //Bild
+
 }
 
-void greyscale(BMPCOLOR **tBMPImg, BMPCOLOR **tBMPGrey, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {      //Grau = 0,299*Rot + 0,587*Grün + 0,144*Blau
-    double dGrey;
+void greyscale(BMPCOLOR **tBMPImg, BMPCOLOR **tBMPGrey, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {
+    long dGrey;
     int iX;
     int iY;
 
     FILE *fpGrey;
     fpGrey=fopen("grau.bmp", "w");
 
-    /*
-    fwrite(tBMPHeader, sizeof(&tBMPHeader), 1, fpGrey);
-    fwrite(tBMPInfoblock, sizeof(&tBMPInfoblock), 1, fpGrey);
-*/
+    fseek(fpGrey,54,SEEK_SET);          //Filepointer auf anfang der Bilddaten setzen
 
-    fseek(fpGrey,54,0);          //Filepointer auf anfang der Bilddaten setzen
-
-    for(iX=0;iX<tBMPInfoblock->lbiWidth;iX++) {
-        for(iY=0;iY<tBMPInfoblock->lbiHeight;iY++) {
+    for(iX=0;iX<tBMPInfoblock->lbiHeight;iX++) {
+        for(iY=0;iY<tBMPInfoblock->lbiWidth;iY++) {
             dGrey=0;
-            dGrey=0.298* tBMPImg[iY][iX].cRed + 0.586 * tBMPImg[iY][iX].cGreen + 0.144 * tBMPImg[iY][iX].cBlue;  //Error: "error reading variable dGrey"
+            dGrey=0.299* tBMPImg[iY][iX].cRed + 0.587 * tBMPImg[iY][iX].cGreen + 0.114 * tBMPImg[iY][iX].cBlue;  //Error: "error reading variable dGrey"
             if(dGrey>255) {
                 dGrey=255;
             }
-            tBMPGrey[iY][iX].cRed=(int)dGrey;                                                                           //i guess something is with those pointers wrong
-            tBMPGrey[iY][iX].cGreen=(int)dGrey;
-            tBMPGrey[iY][iX].cBlue=(int)dGrey;
-        }
-    }
-    for(iX=0;iX<tBMPInfoblock->lbiWidth;iX++) {
-        for(iY=0;iY<tBMPInfoblock->lbiHeight;iY++) {
-            fputc(tBMPGrey[iY][iX].cBlue,fpGrey);
-            fputc(tBMPGrey[iY][iX].cGreen,fpGrey);
-            fputc(tBMPGrey[iY][iX].cRed,fpGrey);
+            fputc(dGrey,fpGrey);                                                                           //i guess something is with those pointers wrong
+            fputc(dGrey,fpGrey);
+            fputc(dGrey,fpGrey);
         }
         fwrite("0", tBMPInfoblock->lbiWidth % 4,1,fpGrey);
     }
 
+
     fclose(fpGrey);
 }
 
+void copy(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {
+    FILE *fpCopy2;
+    int iX;
+    int iY;
+    fpCopy2=fopen("Copy2.bmp", "w");
+    fseek(fpCopy2,54,SEEK_SET);          //Filepointer auf anfang der Bilddaten setzen
+
+    for(iX=0;iX<tBMPInfoblock->lbiHeight;iX++) {
+        for(iY=0;iY<tBMPInfoblock->lbiWidth;iY++) {
+            fputc(tBMPImg[iY][iX].cBlue,fpCopy2);
+            fputc(tBMPImg[iY][iX].cGreen,fpCopy2);
+            fputc(tBMPImg[iY][iX].cRed,fpCopy2);
+        }
+        fwrite("0", tBMPInfoblock->lbiWidth%4,1,fpCopy2);
+    }
+}
+
+void mirroring(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {
+    FILE *fpMirrored;
+    int iX;
+    int iY;
+
+    fpMirrored=fopen("Mirrored.bmp", "w");
+    fseek(fpMirrored,54,SEEK_SET);          //Filepointer auf anfang der Bilddaten setzen
+
+    for(iX=0;iX<abs(tBMPInfoblock->lbiHeight);iX++) {
+        for(iY=tBMPInfoblock->lbiWidth-1;iY>=0;iY--) {
+            fputc(tBMPImg[iY][iX].cBlue,fpMirrored);
+            fputc(tBMPImg[iY][iX].cGreen,fpMirrored);
+            fputc(tBMPImg[iY][iX].cRed,fpMirrored);
+        }
+        fwrite("0", tBMPInfoblock->lbiWidth%4,1,fpMirrored);
+    }
+
+    fclose(fpMirrored);
+}
+
+void rotate(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {
+    FILE *fpRotated;
+    int iX;
+    int iY;
+    fpRotated = fopen("Rotated.bmp", "w");
+
+    fseek(fpRotated,14, 0);
+
+    fwrite(&tBMPInfoblock->uibiSize,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->lbiHeight,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->lbiWidth,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->usbiPlanes,2,1,fpRotated);
+    fwrite(&tBMPInfoblock->usbiBitCount,2,1,fpRotated);
+    fwrite(&tBMPInfoblock->uibiCompression,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->uibiSizeImage,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->lXPelsperMeter,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->lYPelsPerMeter,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->uibiClrUsed,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->uibiClrImportant,4,1,fpRotated);
+
+    for(iY=tBMPInfoblock->lbiWidth;iY>0;iY--) {
+        for(iX=0;iX<tBMPInfoblock->lbiHeight;iX++) {
+            fputc(tBMPImg[iX][iY].cBlue,fpRotated);
+            fputc(tBMPImg[iX][iY].cGreen,fpRotated);
+            fputc(tBMPImg[iX][iY].cRed,fpRotated);
+        }
+        fwrite("0", tBMPInfoblock->lbiHeight%4,1,fpRotated);
+    }
+}
 
 int main()
 {
@@ -129,14 +184,20 @@ int main()
     int iY;
     int iAus;
     FILE *fpBMP;
-    FILE *fpCopy;
+    FILE *fpCopy2;
     FILE *fpGrey;
-    fpBMP = fopen("wuerfel.bmp", "r");
-    fpCopy = fopen("Kopie.bmp", "w+");
+    FILE *fpMirrored;
+    FILE *fpRotated;
+    fpBMP = fopen("fueller.bmp", "r");  //Datei hier ändern
+    fpCopy2 = fopen("Copy2.bmp", "w+");
     fpGrey = fopen("grau.bmp", "w+");
+    fpMirrored = fopen("Mirrored.bmp", "w+");
+    fpRotated = fopen("Rotated.bmp", "w+");
 
     read(&tBMPHeader, &tBMPInfoblock);
     write(&tBMPHeader, &tBMPInfoblock);
+
+
                                         //Speicherreservierung für Bilddaten
     tBMPImg = (BMPCOLOR**)malloc(tBMPInfoblock.lbiWidth*sizeof(BMPCOLOR*));
     if(NULL==tBMPImg) {
@@ -160,6 +221,7 @@ int main()
 
     fseek(fpBMP,54,0);          //Filepointer auf anfang der Bilddaten setzen
 
+
     for(iX=0;iX<tBMPInfoblock.lbiHeight;iX++) {
         for(iY=0;iY<tBMPInfoblock.lbiWidth;iY=iY++) {
             tBMPImg[iY][iX].cBlue = fgetc(fpBMP);
@@ -169,21 +231,11 @@ int main()
         fseek(fpBMP,tBMPInfoblock.lbiWidth%4,SEEK_CUR);
     }
 
-    fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpCopy);
-    fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpCopy);
-
-    for(iX=0;iX<tBMPInfoblock.lbiHeight;iX++) {
-        for(iY=0;iY<tBMPInfoblock.lbiWidth;iY++) {
-            fputc(tBMPImg[iY][iX].cBlue,fpCopy);
-            fputc(tBMPImg[iY][iX].cGreen,fpCopy);
-            fputc(tBMPImg[iY][iX].cRed,fpCopy);
-        }
-        fwrite("0", tBMPInfoblock.lbiWidth%4,1,fpCopy);
-    }
-
     printf("Was möchten Sie machen?\n\n");
     printf("1 Graustufenbild erzeugen\n");
-    printf("2 Bild um 90° drehen\n");
+    printf("2 Kopieren\n");
+    printf("3 Vertikal Spiegeln");
+    printf("4 um 90 Grad drehen");
     scanf("%d", &iAus);
 
     switch(iAus) {
@@ -191,12 +243,22 @@ int main()
         fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpGrey);
         fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpGrey);
         greyscale(tBMPImg, tBMPGrey, &tBMPInfoblock, &tBMPHeader);
-
+        break;
+    case 2:
+        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpCopy2);
+        fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpCopy2);
+        copy(tBMPImg, &tBMPInfoblock, &tBMPHeader);
+        break;
+    case 3:
+        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpMirrored);
+        fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpMirrored);
+        mirroring(tBMPImg, &tBMPInfoblock, &tBMPHeader);
+    case 4:
+        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpRotated);
+        rotate(tBMPImg, &tBMPInfoblock, &tBMPHeader);
     }
 
 
-
-    fclose(fpCopy);
     fclose(fpBMP);
 
 

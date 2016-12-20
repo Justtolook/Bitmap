@@ -55,9 +55,9 @@ void write(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock)
     printf("biClrImportant: %i\n", tBMPInfoblock->uibiClrImportant);
 }
 
-void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) {   //Datei hier ändern
+void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, char *sDateiName[100]) {
     FILE *fpBMP;
-    fpBMP = fopen("fueller.bmp", "r");      //Datei hier ändern
+    fpBMP = fopen(sDateiName, "r");
                                                     //Header
     fread(&tBMPHeader->usbfType,2,1,fpBMP);
     fread(&tBMPHeader->uibfSize,4,1,fpBMP);
@@ -78,13 +78,13 @@ void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) 
 
 }
 
-void greyscale(BMPCOLOR **tBMPImg, BMPCOLOR **tBMPGrey, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {
+void greyscale(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader, char *sSpeicherName[100]) {
     long dGrey;
     int iX;
     int iY;
 
     FILE *fpGrey;
-    fpGrey=fopen("grau.bmp", "w");
+    fpGrey=fopen(sSpeicherName, "w");
 
     fseek(fpGrey,54,SEEK_SET);          //Filepointer auf anfang der Bilddaten setzen
 
@@ -101,34 +101,35 @@ void greyscale(BMPCOLOR **tBMPImg, BMPCOLOR **tBMPGrey, BITMAPINFORMATIONSBLOCK 
         }
         fwrite("0", tBMPInfoblock->lbiWidth % 4,1,fpGrey);
     }
-
-
+    free(fpGrey);
     fclose(fpGrey);
 }
 
-void copy(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {
-    FILE *fpCopy2;
+void copy(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader, char *sSpeicherName[100]) {
+    FILE *fpCopy;
     int iX;
     int iY;
-    fpCopy2=fopen("Copy2.bmp", "w");
-    fseek(fpCopy2,54,SEEK_SET);          //Filepointer auf anfang der Bilddaten setzen
+    fpCopy=fopen(sSpeicherName, "w");
+    fseek(fpCopy,54,SEEK_SET);          //Filepointer auf anfang der Bilddaten setzen
 
     for(iX=0;iX<tBMPInfoblock->lbiHeight;iX++) {
         for(iY=0;iY<tBMPInfoblock->lbiWidth;iY++) {
-            fputc(tBMPImg[iY][iX].cBlue,fpCopy2);
-            fputc(tBMPImg[iY][iX].cGreen,fpCopy2);
-            fputc(tBMPImg[iY][iX].cRed,fpCopy2);
+            fputc(tBMPImg[iY][iX].cBlue,fpCopy);
+            fputc(tBMPImg[iY][iX].cGreen,fpCopy);
+            fputc(tBMPImg[iY][iX].cRed,fpCopy);
         }
-        fwrite("0", tBMPInfoblock->lbiWidth%4,1,fpCopy2);
+        fwrite("0", tBMPInfoblock->lbiWidth%4,1,fpCopy);
     }
+    free(fpCopy);
+    fclose(fpCopy);
 }
 
-void mirroring(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {
+void mirroring(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader, char *sSpeicherName[100]) {
     FILE *fpMirrored;
     int iX;
     int iY;
 
-    fpMirrored=fopen("Mirrored.bmp", "w");
+    fpMirrored=fopen(sSpeicherName, "w");
     fseek(fpMirrored,54,SEEK_SET);          //Filepointer auf anfang der Bilddaten setzen
 
     for(iX=0;iX<abs(tBMPInfoblock->lbiHeight);iX++) {
@@ -139,18 +140,18 @@ void mirroring(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMA
         }
         fwrite("0", tBMPInfoblock->lbiWidth%4,1,fpMirrored);
     }
-
+    free(fpMirrored);
     fclose(fpMirrored);
 }
 
-void rotate(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {
+void rotate(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader, char *sSpeicherName[100]) {
     FILE *fpRotated;
     int iX;
     int iY;
-    fpRotated = fopen("Rotated.bmp", "w");
+    fpRotated = fopen(sSpeicherName, "w");
 
-    fseek(fpRotated,14, 0);
-
+    fseek(fpRotated,14, 0);     //Filepointer auf Infoblock setzen
+                                //Infoblockschreiben
     fwrite(&tBMPInfoblock->uibiSize,4,1,fpRotated);
     fwrite(&tBMPInfoblock->lbiHeight,4,1,fpRotated);
     fwrite(&tBMPInfoblock->lbiWidth,4,1,fpRotated);
@@ -162,15 +163,21 @@ void rotate(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFI
     fwrite(&tBMPInfoblock->lYPelsPerMeter,4,1,fpRotated);
     fwrite(&tBMPInfoblock->uibiClrUsed,4,1,fpRotated);
     fwrite(&tBMPInfoblock->uibiClrImportant,4,1,fpRotated);
+                                        //Bilddatenschreiben
 
-    for(iY=tBMPInfoblock->lbiWidth;iY>0;iY--) {
-        for(iX=0;iX<tBMPInfoblock->lbiHeight;iX++) {
-            fputc(tBMPImg[iX][iY].cBlue,fpRotated);
-            fputc(tBMPImg[iX][iY].cGreen,fpRotated);
-            fputc(tBMPImg[iX][iY].cRed,fpRotated);
+    for(iX=tBMPInfoblock->lbiWidth;iX>=0;iX--) {
+        for(iY=0;iY<tBMPInfoblock->lbiHeight;iY++) {
+            fputc(tBMPImg[iY][iX].cBlue,fpRotated);
+            fputc(tBMPImg[iY][iX].cGreen,fpRotated);
+            fputc(tBMPImg[iY][iX].cRed,fpRotated);
         }
         fwrite("0", tBMPInfoblock->lbiHeight%4,1,fpRotated);
     }
+
+
+    free(fpRotated);
+    fclose(fpRotated);
+
 }
 
 int main()
@@ -178,25 +185,22 @@ int main()
     BITMAPFILEHEADER tBMPHeader;
     BITMAPINFORMATIONSBLOCK tBMPInfoblock;
     BMPCOLOR **tBMPImg;
-    BMPCOLOR **tBMPGrey;
     int iC;
     int iX;
     int iY;
     int iAus;
+    char sSpeicherName[50];
+    char sDateiName[50];
     FILE *fpBMP;
-    FILE *fpCopy2;
-    FILE *fpGrey;
-    FILE *fpMirrored;
-    FILE *fpRotated;
-    fpBMP = fopen("fueller.bmp", "r");  //Datei hier ändern
-    fpCopy2 = fopen("Copy2.bmp", "w+");
-    fpGrey = fopen("grau.bmp", "w+");
-    fpMirrored = fopen("Mirrored.bmp", "w+");
-    fpRotated = fopen("Rotated.bmp", "w+");
+    FILE *fpAusgabe;
 
-    read(&tBMPHeader, &tBMPInfoblock);
-    write(&tBMPHeader, &tBMPInfoblock);
+    printf("Welche Datei möchten Sie bearbeiten?\n");
+    printf("Dateiname: ");
+    scanf("%s", &sDateiName);
 
+    fpBMP = fopen(sDateiName, "r");  //Datei hier ändern
+
+    read(&tBMPHeader, &tBMPInfoblock, sDateiName);  //Einlesen vom Header und Infoblock
 
                                         //Speicherreservierung für Bilddaten
     tBMPImg = (BMPCOLOR**)malloc(tBMPInfoblock.lbiWidth*sizeof(BMPCOLOR*));
@@ -208,60 +212,59 @@ int main()
         tBMPImg[iC]=(BMPCOLOR*)malloc(abs(tBMPInfoblock.lbiHeight)*sizeof(BMPCOLOR));
         if(NULL==tBMPImg[iC]);
     }
-                                        //Speicherreservierung für Graustufenbilddaten
-    tBMPGrey = (BMPCOLOR**)malloc(tBMPInfoblock.lbiWidth*sizeof(BMPCOLOR*));
-    if(NULL==tBMPGrey) {
-        printf("Fehler");
-        exit(1);
-    }
-    for(iC=0; iC<tBMPInfoblock.lbiWidth;iC++) {
-        tBMPGrey[iC]=(BMPCOLOR*)malloc(abs(tBMPInfoblock.lbiHeight)*sizeof(BMPCOLOR));
-        if(NULL==tBMPGrey[iC]);
-    }
 
     fseek(fpBMP,54,0);          //Filepointer auf anfang der Bilddaten setzen
 
-
+                                //Einlesen der Bilddaten
     for(iX=0;iX<tBMPInfoblock.lbiHeight;iX++) {
         for(iY=0;iY<tBMPInfoblock.lbiWidth;iY=iY++) {
             tBMPImg[iY][iX].cBlue = fgetc(fpBMP);
             tBMPImg[iY][iX].cGreen = fgetc(fpBMP);
             tBMPImg[iY][iX].cRed = fgetc(fpBMP);
         }
-        fseek(fpBMP,tBMPInfoblock.lbiWidth%4,SEEK_CUR);
+        fseek(fpBMP,tBMPInfoblock.lbiWidth%4,SEEK_CUR);     //Unbenutze Bilddaten überspringen
     }
 
-    printf("Was möchten Sie machen?\n\n");
+    printf("Was moechten Sie machen?\n\n");
     printf("1 Graustufenbild erzeugen\n");
     printf("2 Kopieren\n");
-    printf("3 Vertikal Spiegeln");
-    printf("4 um 90 Grad drehen");
+    printf("3 Vertikal Spiegeln\n");
+    printf("4 um 90 Grad drehen\n");
+    printf("5 Header und Bildkopf ausgeben\n");
+    printf("Starte: ");
     scanf("%d", &iAus);
-
+    printf("\n");
+    printf("Speichern unter: ");
+    scanf("%s", &sSpeicherName);
+    fpAusgabe = fopen(sSpeicherName, "w+");
+                                        //TODO FILEPOINTER GENERALISIEREN!
     switch(iAus) {
-    case 1:
-        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpGrey);
-        fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpGrey);
-        greyscale(tBMPImg, tBMPGrey, &tBMPInfoblock, &tBMPHeader);
+    case 1:     //GREYSCALING
+        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpAusgabe);
+        fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpAusgabe);
+        greyscale(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
         break;
-    case 2:
-        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpCopy2);
-        fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpCopy2);
-        copy(tBMPImg, &tBMPInfoblock, &tBMPHeader);
+    case 2:     //COPY
+        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpAusgabe);
+        fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpAusgabe);
+        copy(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
         break;
-    case 3:
-        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpMirrored);
-        fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpMirrored);
-        mirroring(tBMPImg, &tBMPInfoblock, &tBMPHeader);
+    case 3:     //MIRRORING
+        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpAusgabe);
+        fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpAusgabe);
+        mirroring(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
         break;
-    case 4:
-        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpRotated);
-        rotate(tBMPImg, &tBMPInfoblock, &tBMPHeader);
+    case 4:     //ROTATING
+        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpAusgabe);
+        rotate(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
+        break;
+    case 5:     //Ausgeben vom Header und Infoblock
+        write(&tBMPHeader, &tBMPInfoblock);
+        break;
     }
 
-
+    free(fpBMP);
     fclose(fpBMP);
-
 
     return 0;
 }

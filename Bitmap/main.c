@@ -91,22 +91,6 @@ void greyscale(BMPCOLOR **tBMPImg, BMPCOLOR **tBMPGrey, BITMAPINFORMATIONSBLOCK 
     for(iX=0;iX<tBMPInfoblock->lbiHeight;iX++) {
         for(iY=0;iY<tBMPInfoblock->lbiWidth;iY++) {
             dGrey=0;
-<<<<<<< HEAD
-            dGrey=0.298* tBMPImg[iX][iY].cRed + 0.586 * tBMPImg[iX][iY].cGreen + 0.144 * tBMPImg[iX][iY].cBlue;  //Error: "error reading variable dGrey"
-            if(dGrey>255) {
-                dGrey=255;
-            }
-            tBMPGrey[iX][iY].cRed=(int)dGrey;                                                                           //i guess something is with those pointers wrong
-            tBMPGrey[iX][iY].cGreen=(int)dGrey;
-            tBMPGrey[iX][iY].cBlue=(int)dGrey;
-        }
-    }
-    for(iX=0;iX<tBMPInfoblock->lbiWidth;iX++) {
-        for(iY=0;iY<tBMPInfoblock->lbiHeight;iY++) {
-            fputc(tBMPGrey[iX][iY].cBlue,fpGrey);
-            fputc(tBMPGrey[iX][iY].cGreen,fpGrey);
-            fputc(tBMPGrey[iX][iY].cRed,fpGrey);
-=======
             dGrey=0.299* tBMPImg[iY][iX].cRed + 0.587 * tBMPImg[iY][iX].cGreen + 0.114 * tBMPImg[iY][iX].cBlue;  //Error: "error reading variable dGrey"
             if(dGrey>255) {
                 dGrey=255;
@@ -114,7 +98,6 @@ void greyscale(BMPCOLOR **tBMPImg, BMPCOLOR **tBMPGrey, BITMAPINFORMATIONSBLOCK 
             fputc(dGrey,fpGrey);                                                                           //i guess something is with those pointers wrong
             fputc(dGrey,fpGrey);
             fputc(dGrey,fpGrey);
->>>>>>> origin/master
         }
         fwrite("0", tBMPInfoblock->lbiWidth % 4,1,fpGrey);
     }
@@ -250,14 +233,9 @@ int main()
 
     printf("Was möchten Sie machen?\n\n");
     printf("1 Graustufenbild erzeugen\n");
-<<<<<<< HEAD
-    printf("2 Bild um 90° drehen\n");
-    printf("3 Bild vertikal spiegeln\n");
-=======
     printf("2 Kopieren\n");
     printf("3 Vertikal Spiegeln");
     printf("4 um 90 Grad drehen");
->>>>>>> origin/master
     scanf("%d", &iAus);
 
     switch(iAus) {
@@ -265,8 +243,6 @@ int main()
         fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpGrey);
         fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpGrey);
         greyscale(tBMPImg, tBMPGrey, &tBMPInfoblock, &tBMPHeader);
-<<<<<<< HEAD
-=======
         break;
     case 2:
         fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpCopy2);
@@ -277,10 +253,10 @@ int main()
         fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpMirrored);
         fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpMirrored);
         mirroring(tBMPImg, &tBMPInfoblock, &tBMPHeader);
+        break;
     case 4:
         fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpRotated);
         rotate(tBMPImg, &tBMPInfoblock, &tBMPHeader);
->>>>>>> origin/master
     }
 
 

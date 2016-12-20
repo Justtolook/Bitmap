@@ -96,20 +96,20 @@ void greyscale(BMPCOLOR **tBMPImg, BMPCOLOR **tBMPGrey, BITMAPINFORMATIONSBLOCK 
     for(iX=0;iX<tBMPInfoblock->lbiWidth;iX++) {
         for(iY=0;iY<tBMPInfoblock->lbiHeight;iY++) {
             dGrey=0;
-            dGrey=0.298* tBMPImg[iY][iX].cRed + 0.586 * tBMPImg[iY][iX].cGreen + 0.144 * tBMPImg[iY][iX].cBlue;  //Error: "error reading variable dGrey"
+            dGrey=0.298* tBMPImg[iX][iY].cRed + 0.586 * tBMPImg[iX][iY].cGreen + 0.144 * tBMPImg[iX][iY].cBlue;  //Error: "error reading variable dGrey"
             if(dGrey>255) {
                 dGrey=255;
             }
-            tBMPGrey[iY][iX].cRed=(int)dGrey;                                                                           //i guess something is with those pointers wrong
-            tBMPGrey[iY][iX].cGreen=(int)dGrey;
-            tBMPGrey[iY][iX].cBlue=(int)dGrey;
+            tBMPGrey[iX][iY].cRed=(int)dGrey;                                                                           //i guess something is with those pointers wrong
+            tBMPGrey[iX][iY].cGreen=(int)dGrey;
+            tBMPGrey[iX][iY].cBlue=(int)dGrey;
         }
     }
     for(iX=0;iX<tBMPInfoblock->lbiWidth;iX++) {
         for(iY=0;iY<tBMPInfoblock->lbiHeight;iY++) {
-            fputc(tBMPGrey[iY][iX].cBlue,fpGrey);
-            fputc(tBMPGrey[iY][iX].cGreen,fpGrey);
-            fputc(tBMPGrey[iY][iX].cRed,fpGrey);
+            fputc(tBMPGrey[iX][iY].cBlue,fpGrey);
+            fputc(tBMPGrey[iX][iY].cGreen,fpGrey);
+            fputc(tBMPGrey[iX][iY].cRed,fpGrey);
         }
         fwrite("0", tBMPInfoblock->lbiWidth % 4,1,fpGrey);
     }
@@ -184,6 +184,7 @@ int main()
     printf("Was möchten Sie machen?\n\n");
     printf("1 Graustufenbild erzeugen\n");
     printf("2 Bild um 90° drehen\n");
+    printf("3 Bild vertikal spiegeln\n");
     scanf("%d", &iAus);
 
     switch(iAus) {
@@ -191,7 +192,6 @@ int main()
         fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpGrey);
         fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpGrey);
         greyscale(tBMPImg, tBMPGrey, &tBMPInfoblock, &tBMPHeader);
-
     }
 
 

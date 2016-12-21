@@ -144,16 +144,16 @@ void mirroring(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMA
     fclose(fpMirrored);
 }
 
-void rotate(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader, char *sSpeicherName[100]) {
+void rotate_l(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader, char *sSavingName[100]) {
     FILE *fpRotated;
     int iX;
     int iY;
-    fpRotated = fopen(sSpeicherName, "w");
+    fpRotated = fopen(sSavingName, "w");
 
-    fseek(fpRotated,14, 0);     //Filepointer auf Infoblock setzen
-                                //Infoblockschreiben
+    fseek(fpRotated,14, 0);     //Set Filepointer to begin of the informationsblock
+                                //write infoblock
     fwrite(&tBMPInfoblock->uibiSize,4,1,fpRotated);
-    fwrite(&tBMPInfoblock->lbiHeight,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->lbiHeight,4,1,fpRotated);    //Height and Width changed
     fwrite(&tBMPInfoblock->lbiWidth,4,1,fpRotated);
     fwrite(&tBMPInfoblock->usbiPlanes,2,1,fpRotated);
     fwrite(&tBMPInfoblock->usbiBitCount,2,1,fpRotated);
@@ -163,17 +163,16 @@ void rotate(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFI
     fwrite(&tBMPInfoblock->lYPelsPerMeter,4,1,fpRotated);
     fwrite(&tBMPInfoblock->uibiClrUsed,4,1,fpRotated);
     fwrite(&tBMPInfoblock->uibiClrImportant,4,1,fpRotated);
-                                        //Bilddatenschreiben
 
-    for(iX=tBMPInfoblock->lbiWidth;iX>=0;iX--) {
-        for(iY=0;iY<tBMPInfoblock->lbiHeight;iY++) {
-            fputc(tBMPImg[iY][iX].cBlue,fpRotated);
-            fputc(tBMPImg[iY][iX].cGreen,fpRotated);
-            fputc(tBMPImg[iY][iX].cRed,fpRotated);
+                                        //write pixels
+for(iX=0;iX<tBMPInfoblock->lbiWidth;iX++) {
+        for(iY=tBMPInfoblock->lbiHeight-1;iY>=0;iY--) {
+            fputc(tBMPImg[iX][iY].cBlue,fpRotated);
+            fputc(tBMPImg[iX][iY].cGreen,fpRotated);
+            fputc(tBMPImg[iX][iY].cRed,fpRotated);
         }
-        fwrite("0", tBMPInfoblock->lbiHeight%4,1,fpRotated);
+        fwrite("0", tBMPInfoblock->lbiHeight%4,1,fpRotated);    //Fill up unused Bytes
     }
-
 
     free(fpRotated);
     fclose(fpRotated);
@@ -229,8 +228,9 @@ int main()
     printf("1 Graustufenbild erzeugen\n");
     printf("2 Kopieren\n");
     printf("3 Vertikal Spiegeln\n");
-    printf("4 um 90 Grad drehen\n");
-    printf("5 Header und Bildkopf ausgeben\n");
+    printf("4 um 90 Grad nach links drehen\n");
+    printf("5 um 90 Grad nach links drehen\n");
+    printf("6 Header und Bildkopf ausgeben\n");
     printf("Starte: ");
     scanf("%d", &iAus);
     printf("\n");
@@ -256,9 +256,13 @@ int main()
         break;
     case 4:     //ROTATING
         fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpAusgabe);
-        rotate(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
+        rotate_l(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
         break;
-    case 5:     //Ausgeben vom Header und Infoblock
+    case 5:     //ROTATING
+        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpAusgabe);
+        rotate_l(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
+        break;
+    case 6:     //Ausgeben vom Header und Infoblock
         write(&tBMPHeader, &tBMPInfoblock);
         break;
     }

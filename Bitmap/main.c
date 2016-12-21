@@ -1,7 +1,12 @@
+/*
+Autor: Henrik Lammert
+Thema: Bitmap
+Letzte Änderung: 21.12.2016
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 
-//TODO erstellen vom Bild in eine Funktion packen
 
 #pragma pack(1)
 typedef struct {
@@ -31,7 +36,6 @@ typedef struct {
     unsigned char cRed;
     unsigned char cGreen;
     unsigned char cBlue;
-    //unsigned char cUseless;
 }BMPCOLOR;
 
 void write(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock) {
@@ -214,6 +218,74 @@ void rotate_r(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAP
 
 }
 
+void secret_text_write(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader, char *sSavingName[100]) {
+    char sText[500];
+    FILE *fpSecretText;
+    int iX;
+    int iY;
+    int iSBytes; //Geheime Bytes
+    int iSX;
+    int iWrittenBytes=0;
+    fpSecretText=fopen(sSavingName, "w+");
+    fseek(fpSecretText,54,SEEK_SET);          //Filepointer auf anfang der Bilddaten setzen
+
+
+    printf("Bitte geben Sie ihren geheim Text ein:\n\n");
+    scanf("%s", &sText);
+    fflush(stdin);
+
+    iSBytes=tBMPInfoblock->lbiWidth%4;
+
+    for(iX=0;iX<tBMPInfoblock->lbiHeight;iX++) {
+        for(iY=0;iY<tBMPInfoblock->lbiWidth;iY++) {
+            fputc(tBMPImg[iY][iX].cBlue,fpSecretText);
+            fputc(tBMPImg[iY][iX].cGreen,fpSecretText);
+            fputc(tBMPImg[iY][iX].cRed,fpSecretText);
+        }
+        for(iSX=0;iSX<iSBytes;iSX++) {
+            fputc(sText[iWrittenBytes], fpSecretText);
+            iWrittenBytes++;
+        }
+
+    }
+    free(sText);
+    free(fpSecretText);
+    fclose(fpSecretText);
+
+
+}
+
+void secret_text_read(char *sDateiName, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {
+    char sText[500];
+    FILE *fpSecretText;
+    int iX;
+    int iY;
+    int iSBytes; //Geheime Bytes
+    int iSX;
+    int iReadBytes=0;
+    fpSecretText=fopen(sDateiName, "r");
+    fseek(fpSecretText,54,SEEK_SET);          //Filepointer auf anfang der Bilddaten setzen
+
+
+    iSBytes=tBMPInfoblock->lbiWidth%4;
+
+    for(iX=0;iX<tBMPInfoblock->lbiHeight;iX++) {
+        fseek(fpSecretText, tBMPInfoblock->lbiWidth,SEEK_CUR);
+
+        for(iSX=0;iSX<iSBytes;iSX++) {
+            sText[iReadBytes]=fgetc(fpSecretText);
+            printf("%c", sText[iReadBytes]);
+            iReadBytes++;
+        }
+
+    }
+    free(sText);
+    free(fpSecretText);
+    fclose(fpSecretText);
+
+
+}
+
 int main()
 {
     BITMAPFILEHEADER tBMPHeader;
@@ -232,7 +304,7 @@ int main()
     printf("Dateiname: ");
     scanf("%s", &sDateiName);
 
-    fpBMP = fopen(sDateiName, "r");  //Datei hier ändern
+    fpBMP = fopen(sDateiName, "r");
 
     read(&tBMPHeader, &tBMPInfoblock, sDateiName);  //Einlesen vom Header und Infoblock
 
@@ -265,13 +337,17 @@ int main()
     printf("3 Vertikal Spiegeln\n");
     printf("4 um 90 Grad nach links drehen\n");
     printf("5 um 90 Grad nach rechts drehen\n");
-    printf("6 Header und Bildkopf ausgeben\n");
+    printf("6 Header und Infoblock ausgeben\n");
     printf("Starte: ");
     scanf("%d", &iAus);
     printf("\n");
+    if(iAus==7) {
+        goto A;
+    }
     printf("Speichern unter: ");
     scanf("%s", &sSpeicherName);
     fpAusgabe = fopen(sSpeicherName, "w+");
+    A:
                                         //TODO FILEPOINTER GENERALISIEREN!
     switch(iAus) {
     case 1:     //GREYSCALING
@@ -299,6 +375,14 @@ int main()
         break;
     case 6:     //Ausgeben vom Header und Infoblock
         write(&tBMPHeader, &tBMPInfoblock);
+        break;
+    case 7:
+        secret_text_read(sDateiName, &tBMPInfoblock, &tBMPHeader);
+        break;
+    case 8:
+        fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpAusgabe);
+        fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpAusgabe);
+        secret_text_write(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
         break;
     }
 

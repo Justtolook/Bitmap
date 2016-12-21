@@ -150,10 +150,10 @@ void rotate_l(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAP
     int iY;
     fpRotated = fopen(sSavingName, "w");
 
-    fseek(fpRotated,14, 0);     //Set Filepointer to begin of the informationsblock
-                                //write infoblock
+    fseek(fpRotated,14, 0);     //Filepointer auf Infoblock setzen
+                                //Infoblock schreiben
     fwrite(&tBMPInfoblock->uibiSize,4,1,fpRotated);
-    fwrite(&tBMPInfoblock->lbiHeight,4,1,fpRotated);    //Height and Width changed
+    fwrite(&tBMPInfoblock->lbiHeight,4,1,fpRotated);    //Höhe und Breite getauscht
     fwrite(&tBMPInfoblock->lbiWidth,4,1,fpRotated);
     fwrite(&tBMPInfoblock->usbiPlanes,2,1,fpRotated);
     fwrite(&tBMPInfoblock->usbiBitCount,2,1,fpRotated);
@@ -164,9 +164,44 @@ void rotate_l(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAP
     fwrite(&tBMPInfoblock->uibiClrUsed,4,1,fpRotated);
     fwrite(&tBMPInfoblock->uibiClrImportant,4,1,fpRotated);
 
-                                        //write pixels
+                                        //Bilddaten schreiben
 for(iX=0;iX<tBMPInfoblock->lbiWidth;iX++) {
         for(iY=tBMPInfoblock->lbiHeight-1;iY>=0;iY--) {
+            fputc(tBMPImg[iX][iY].cBlue,fpRotated);
+            fputc(tBMPImg[iX][iY].cGreen,fpRotated);
+            fputc(tBMPImg[iX][iY].cRed,fpRotated);
+        }
+        fwrite("0", tBMPInfoblock->lbiHeight%4,1,fpRotated);    //Fill up unused Bytes
+    }
+
+    free(fpRotated);
+    fclose(fpRotated);
+
+}
+
+void rotate_r(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader, char *sSavingName[100]) {
+    FILE *fpRotated;
+    int iX;
+    int iY;
+    fpRotated = fopen(sSavingName, "w");
+
+    fseek(fpRotated,14, 0);     //Filepointer auf Infoblock setzen
+                                //Infoblock schreiben
+    fwrite(&tBMPInfoblock->uibiSize,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->lbiHeight,4,1,fpRotated);    //Höhe und Breite getauscht
+    fwrite(&tBMPInfoblock->lbiWidth,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->usbiPlanes,2,1,fpRotated);
+    fwrite(&tBMPInfoblock->usbiBitCount,2,1,fpRotated);
+    fwrite(&tBMPInfoblock->uibiCompression,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->uibiSizeImage,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->lXPelsperMeter,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->lYPelsPerMeter,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->uibiClrUsed,4,1,fpRotated);
+    fwrite(&tBMPInfoblock->uibiClrImportant,4,1,fpRotated);
+
+                                        //Bilddaten schreiben
+    for(iX=tBMPInfoblock->lbiWidth-1;iX>=0;iX--) {
+        for(iY=0;iY<tBMPInfoblock->lbiHeight;iY++) {
             fputc(tBMPImg[iX][iY].cBlue,fpRotated);
             fputc(tBMPImg[iX][iY].cGreen,fpRotated);
             fputc(tBMPImg[iX][iY].cRed,fpRotated);
@@ -229,7 +264,7 @@ int main()
     printf("2 Kopieren\n");
     printf("3 Vertikal Spiegeln\n");
     printf("4 um 90 Grad nach links drehen\n");
-    printf("5 um 90 Grad nach links drehen\n");
+    printf("5 um 90 Grad nach rechts drehen\n");
     printf("6 Header und Bildkopf ausgeben\n");
     printf("Starte: ");
     scanf("%d", &iAus);
@@ -254,13 +289,13 @@ int main()
         fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpAusgabe);
         mirroring(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
         break;
-    case 4:     //ROTATING
+    case 4:     //ROTATING left
         fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpAusgabe);
         rotate_l(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
         break;
-    case 5:     //ROTATING
+    case 5:     //ROTATING right
         fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpAusgabe);
-        rotate_l(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
+        rotate_r(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
         break;
     case 6:     //Ausgeben vom Header und Infoblock
         write(&tBMPHeader, &tBMPInfoblock);

@@ -1,7 +1,7 @@
 /*
 Autor: Henrik Lammert
 Thema: Bitmap
-Letzte Änderung: 21.12.2016
+Letzte Änderung: 22.12.2016
 */
 
 #include <stdio.h>
@@ -80,6 +80,8 @@ void read(BITMAPFILEHEADER *tBMPHeader, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, 
     fread(&tBMPInfoblock->uibiClrUsed,4,1,fpBMP);
     fread(&tBMPInfoblock->uibiClrImportant,4,1,fpBMP);
 
+    free(fpBMP);
+    fclose(fpBMP);
 }
 
 void greyscale(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader, char *sSpeicherName[100]) {
@@ -95,11 +97,11 @@ void greyscale(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMA
     for(iX=0;iX<tBMPInfoblock->lbiHeight;iX++) {
         for(iY=0;iY<tBMPInfoblock->lbiWidth;iY++) {
             dGrey=0;
-            dGrey=0.299* tBMPImg[iY][iX].cRed + 0.587 * tBMPImg[iY][iX].cGreen + 0.114 * tBMPImg[iY][iX].cBlue;  //Error: "error reading variable dGrey"
+            dGrey=0.299* tBMPImg[iY][iX].cRed + 0.587 * tBMPImg[iY][iX].cGreen + 0.114 * tBMPImg[iY][iX].cBlue;
             if(dGrey>255) {
                 dGrey=255;
             }
-            fputc(dGrey,fpGrey);                                                                           //i guess something is with those pointers wrong
+            fputc(dGrey,fpGrey);
             fputc(dGrey,fpGrey);
             fputc(dGrey,fpGrey);
         }
@@ -180,7 +182,6 @@ for(iX=0;iX<tBMPInfoblock->lbiWidth;iX++) {
 
     free(fpRotated);
     fclose(fpRotated);
-
 }
 
 void rotate_r(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader, char *sSavingName[100]) {
@@ -215,35 +216,39 @@ void rotate_r(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAP
 
     free(fpRotated);
     fclose(fpRotated);
-
 }
 
 void secret_text_write(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader, char *sSavingName[100]) {
-    char sText[500];
+    char sText[1000];
     FILE *fpSecretText;
     int iX;
     int iY;
     int iSBytes; //Geheime Bytes
     int iSX;
     int iWrittenBytes=0;
-    fpSecretText=fopen(sSavingName, "w+");
+    fpSecretText=fopen(sSavingName, "w");
     fseek(fpSecretText,54,SEEK_SET);          //Filepointer auf anfang der Bilddaten setzen
 
 
-    printf("Bitte geben Sie ihren geheim Text ein:\n\n");
+    printf("Bitte geben Sie ihren geheim Text ein (keine Leerzeichen):\n\n");
     scanf("%s", &sText);
     fflush(stdin);
 
     iSBytes=tBMPInfoblock->lbiWidth%4;
 
-    for(iX=0;iX<tBMPInfoblock->lbiHeight;iX++) {
-        for(iY=0;iY<tBMPInfoblock->lbiWidth;iY++) {
-            fputc(tBMPImg[iY][iX].cBlue,fpSecretText);
-            fputc(tBMPImg[iY][iX].cGreen,fpSecretText);
-            fputc(tBMPImg[iY][iX].cRed,fpSecretText);
+    for(iY=0;iY<tBMPInfoblock->lbiHeight;iY++) {
+        for(iX=0;iX<tBMPInfoblock->lbiWidth;iX++) {
+            fputc(tBMPImg[iX][iY].cBlue,fpSecretText);
+            fputc(tBMPImg[iX][iY].cGreen,fpSecretText);
+            fputc(tBMPImg[iX][iY].cRed,fpSecretText);
         }
         for(iSX=0;iSX<iSBytes;iSX++) {
-            fputc(sText[iWrittenBytes], fpSecretText);
+            if(iSX>999) {
+                fputc("0", fpSecretText);
+            }
+            else {
+                fputc(sText[iWrittenBytes], fpSecretText);
+            }
             iWrittenBytes++;
         }
 
@@ -251,12 +256,10 @@ void secret_text_write(BMPCOLOR **tBMPImg, BITMAPINFORMATIONSBLOCK *tBMPInfobloc
     free(sText);
     free(fpSecretText);
     fclose(fpSecretText);
-
-
 }
 
 void secret_text_read(char *sDateiName, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, BITMAPFILEHEADER *tBMPHeader) {
-    char sText[500];
+    char sText[1000];
     FILE *fpSecretText;
     int iX;
     int iY;
@@ -267,14 +270,15 @@ void secret_text_read(char *sDateiName, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, 
     fseek(fpSecretText,54,SEEK_SET);          //Filepointer auf anfang der Bilddaten setzen
 
 
-    iSBytes=tBMPInfoblock->lbiWidth%4;
+    iSBytes=tBMPInfoblock->lbiWidth%4;      //Anzahl der geheimen Bytes berechnen
 
-    for(iX=0;iX<tBMPInfoblock->lbiHeight;iX++) {
-        fseek(fpSecretText, tBMPInfoblock->lbiWidth,SEEK_CUR);
-
+    for(iY=0;iY<tBMPInfoblock->lbiHeight;iY++) {
+        for(iX=0;iX<tBMPInfoblock->lbiWidth;iX++) {
+            fseek(fpSecretText,3,SEEK_CUR);
+        }
         for(iSX=0;iSX<iSBytes;iSX++) {
             sText[iReadBytes]=fgetc(fpSecretText);
-            printf("%c", sText[iReadBytes]);
+            printf("%c", sText[iReadBytes]);        //Ausgabe des geheimen Bytes
             iReadBytes++;
         }
 
@@ -282,8 +286,6 @@ void secret_text_read(char *sDateiName, BITMAPINFORMATIONSBLOCK *tBMPInfoblock, 
     free(sText);
     free(fpSecretText);
     fclose(fpSecretText);
-
-
 }
 
 int main()
@@ -319,7 +321,7 @@ int main()
         if(NULL==tBMPImg[iC]);
     }
 
-    fseek(fpBMP,54,0);          //Filepointer auf anfang der Bilddaten setzen
+    fseek(fpBMP,54,0);          //Filepointer auf Anfang der Bilddaten setzen
 
                                 //Einlesen der Bilddaten
     for(iX=0;iX<tBMPInfoblock.lbiHeight;iX++) {
@@ -338,10 +340,12 @@ int main()
     printf("4 um 90 Grad nach links drehen\n");
     printf("5 um 90 Grad nach rechts drehen\n");
     printf("6 Header und Infoblock ausgeben\n");
+    printf("7 Versteckte Bytes auslesen\n");
+    printf("8 Geheimtext schreiben\n");
     printf("Starte: ");
     scanf("%d", &iAus);
     printf("\n");
-    if(iAus==7) {
+    if(iAus==7 || iAus==6) {    //Kein Speichename für das Ausgeben vom Head und des Geheimtextes benötigt
         goto A;
     }
     printf("Speichern unter: ");
@@ -373,21 +377,22 @@ int main()
         fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpAusgabe);
         rotate_r(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
         break;
-    case 6:     //Ausgeben vom Header und Infoblock
+    case 6:     //PRINT HEAD AND INFOBLOCK
         write(&tBMPHeader, &tBMPInfoblock);
         break;
-    case 7:
+    case 7:     //READ HIDDEN BYTES
         secret_text_read(sDateiName, &tBMPInfoblock, &tBMPHeader);
         break;
-    case 8:
+    case 8:     //WRITE HIDDEN BYTES
         fwrite(&tBMPHeader, sizeof(tBMPHeader), 1, fpAusgabe);
         fwrite(&tBMPInfoblock, sizeof(tBMPInfoblock), 1, fpAusgabe);
         secret_text_write(tBMPImg, &tBMPInfoblock, &tBMPHeader, sSpeicherName);
         break;
     }
 
+    free(fpAusgabe);
     free(fpBMP);
+    fclose(fpAusgabe);
     fclose(fpBMP);
-
     return 0;
 }
